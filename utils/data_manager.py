@@ -52,12 +52,15 @@ def get_report_details(report_id):
     """Simulates fetching detailed rows for a specific report from SQL."""
     # Just generating some dummy data based on ID
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM `inferances`;")
-        result = cursor.fetchone()
+        cursor.execute(f"SELECT * FROM `inferences` where report_id = {report_id};")
+        result = cursor.fetchall()
         return result
 
 
 def delete_report(report_id):
     """Simulates deleting a report."""
-    st.session_state.reports = [r for r in st.session_state.reports if r['id'] != report_id]
-    st.toast(f"Report {report_id} deleted!", icon="🗑️")
+    with conn.cursor() as cursor:
+        cursor.execute(f"DELETE FROM `inferences` WHERE report_id = {report_id};")  
+        cursor.execute(f"DELETE FROM `reports` WHERE id = {report_id};")
+        conn.commit()
+        

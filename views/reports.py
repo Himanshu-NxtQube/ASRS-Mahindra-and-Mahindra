@@ -1,16 +1,24 @@
 import streamlit as st
+import pandas as pd
 from utils.data_manager import get_reports, get_report_details, delete_report
 
 def show():
     st.header("Reports")
 
-    # Check if we are in "Detail View" mode
     if 'selected_report_id' in st.session_state and st.session_state.selected_report_id is not None:
-        # --- Detail View ---
         report_id = st.session_state.selected_report_id
-        # Fetch fresh reports list to get the name
         reports = get_reports()
-        report_name = next((r[2] for r in reports if r['id'] == report_id), "Unknown Report")
+        
+        if reports:
+            # Note: User swapped indices: 1 is Name, 2 is Date (based on list view logic below)
+            # But wait, the list view logic says: report_name = report[1], report_date = report[2]
+            # So here we should probably match that if we want consistency.
+            # However, the previous code had report_name = r[2]. 
+            # The user explicitly changed the list view to be report[1] for name.
+            # So I should update this lookup to match report[1] for name.
+            report_name = next((r[1] for r in reports if r[0] == report_id), "Unknown Report")
+        else:
+            report_name = "Unknown Report"
         
         col_back, col_title = st.columns([1, 5])
         with col_back:
@@ -20,54 +28,58 @@ def show():
         with col_title:
             st.subheader(f"Details: {report_name}")
             
-        df_details = get_report_details(report_id)
-        st.dataframe(df_details, use_container_width=True)
+        details_data = get_report_details(report_id)
+        
+        if details_data:
+            df_details = pd.DataFrame(details_data)
+            st.dataframe(df_details, use_container_width=True)
+        else:
+            st.info("No details available for this report.")
         
     else:
-        # --- List View ---
-        reports = get_mock_reports()
+        reports = get_reports()
         
         if not reports:
             st.info("No reports found.")
             return
 
-        # Header Row
         col1, col2, col3 = st.columns([3, 2, 4])
         col1.markdown("**Report Name**")
         col2.markdown("**Date**")
         col3.markdown("**Actions**")
         st.divider()
 
-        # Data Rows
         for report in reports:
+            if len(report) < 3:
+                continue
+                
             c1, c2, c3 = st.columns([3, 2, 4])
             
-            # Report Name (Clickable to view details)
-            if c1.button(report['name'], key=f"view_{report['id']}"):
-                st.session_state.selected_report_id = report['id']
+            report_id = report[0]
+            report_name = report[1]
+            report_date = report[2]
+            
+            if c1.button(report_name, key=f"view_{report_id}"):
+                st.session_state.selected_report_id = report_id
                 st.rerun()
                 
-            c2.write(report['date'])
+            c2.write(report_date)
             
-            # Actions Column
             with c3:
                 ac1, ac2, ac3 = st.columns(3)
                 with ac1:
-                    # Download (Mock)
                     st.download_button(
                         label="⬇️",
-                        data=f"Mock data for {report['name']}",
-                        file_name=f"{report['name']}.txt",
-                        key=f"dl_{report['id']}",
+                        data=f"Mock data for {report_name}",
+                        file_name=f"{report_name}.txt",
+                        key=f"dl_{report_id}",
                         help="Download Report"
                     )
                 with ac2:
-                    # Edit (Mock)
-                    if st.button("✏️", key=f"edit_{report['id']}", help="Edit Report"):
-                        st.toast(f"Edit feature for {report['name']} coming soon!", icon="🚧")
+                    if st.button("✏️", key=f"edit_{report_id}", help="Edit Report"):
+                      st.toast(f"Edit feature for {report_name} coming soon!", icon="🚧")
                 with ac3:
-                    # Delete
-                    if st.button("🗑️", key=f"del_{report['id']}", help="Delete Report"):
-                        delete_report(report['id'])
+                    if st.button("🗑️", key=f"del_{report_id}", help="Delete Report"):
+                        delete_report(report_id)
                         st.rerun()
             st.divider()
