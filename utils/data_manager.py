@@ -70,4 +70,30 @@ def delete_report(report_id):
         cursor.execute(f"DELETE FROM `inferences` WHERE report_id = {report_id};")  
         cursor.execute(f"DELETE FROM `reports` WHERE id = {report_id};")
         conn.commit()
+
+def create_report(name, images):
+    """Creates a new report and saves uploaded images."""
+    # Sanitize report name for directory usage
+    safe_name = "".join([c if c.isalnum() or c in (' ', '-', '_') else '_' for c in name]).strip().replace(' ', '_')
+    
+    # Create directory
+    base_dir = "uploaded_reports"
+    report_dir = os.path.join(base_dir, safe_name)
+    
+    try:
+        os.makedirs(report_dir, exist_ok=True)
         
+        saved_count = 0
+        for img_file in images:
+            file_path = os.path.join(report_dir, img_file.name)
+            with open(file_path, "wb") as f:
+                f.write(img_file.getbuffer())
+            saved_count += 1
+        with conn.cursor() as cursor:
+            cursor.execute("INSERT INTO `reports` (report_name, createdAt) VALUES(%s, %s);", (name, datetime.datetime.now().date()))
+            conn.commit()
+        st.toast(f"Report '{name}' created! Saved {saved_count} images to {report_dir}", icon="✅")
+        return True
+    except Exception as e:
+        st.error(f"Failed to save report images: {e}")
+        return False

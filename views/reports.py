@@ -1,11 +1,33 @@
 import streamlit as st
 import pandas as pd
-from utils.data_manager import get_reports, get_report_details, delete_report
+from utils.data_manager import get_reports, get_report_details, delete_report, create_report
 from datetime import datetime
 
 def show():
     st.header("Reports")
     date = st.date_input("Date", datetime.now().date())
+    # Create Report Section
+    if "show_create_form" not in st.session_state:
+        st.session_state.show_create_form = False
+
+    if st.button("➕ Create Report"):
+        st.session_state.show_create_form = not st.session_state.show_create_form
+
+    if st.session_state.show_create_form:
+        with st.container(border=True):
+            st.subheader("Create New Report")
+            new_report_name = st.text_input("Report Name")
+            uploaded_files = st.file_uploader("Upload Images", accept_multiple_files=True)
+            
+            if st.button("Submit Report"):
+                if new_report_name and uploaded_files:
+                    if create_report(new_report_name, uploaded_files):
+                        st.session_state.show_create_form = False
+                        st.rerun()
+                else:
+                    st.error("Please provide a report name and upload at least one image.")
+
+    
     if 'selected_report_id' in st.session_state and st.session_state.selected_report_id is not None:
         report_id = st.session_state.selected_report_id
         reports = get_reports(date)

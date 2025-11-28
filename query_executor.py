@@ -67,7 +67,7 @@ with conn.cursor() as cursor:
     # cursor.execute("INSERT INTO `inferences` (unique_id, image_name, vin_no, quantity, exclusion, createdAt, updatedAt, report_id, is_non_confirmity) VALUES ('@AA1123', 'DJI_0005.JPG', 'HY322NHD', 1, '', NOW(), NOW(), 3, 0);")
     # cursor.execute("INSERT INTO `inferences` (unique_id, image_name, vin_no, quantity, exclusion, createdAt, updatedAt, report_id, is_non_confirmity) VALUES ('@AA1124', 'DJI_0006.JPG', 'HY322NHD', 1, '', NOW(), NOW(), 3, 0);")
     # cursor.execute("SELECT * FROM inferences;")
-    cursor.execute("ALTER TABLE reports MODIFY COLUMN createdAt DATE")
+    cursor.execute("DESCRIBE reports;")
 
     conn.commit()
     res = cursor.fetchall()
