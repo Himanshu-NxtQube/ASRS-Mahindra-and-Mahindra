@@ -4,6 +4,8 @@ import datetime
 import os
 import pymysql
 from dotenv import load_dotenv
+
+
 load_dotenv()
 
 conn = pymysql.connect(
@@ -13,6 +15,32 @@ conn = pymysql.connect(
     database=os.getenv("rds_dbname"),           # Target DB name
     port=int(os.getenv("rds_port", 3306))                                # Default MySQL port
 )
+
+def get_record(unique_id):
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM `raw-data` WHERE unique_id = %s;", (unique_id,))
+        result = cursor.fetchone()
+    if result:
+        return result
+    return (None, unique_id, None, None, None, None)
+
+def upload_result(result, report_id, s3_obj_url):
+    with conn.cursor() as cursor:
+        for row in result:
+            cursor.execute(
+                """
+                INSERT INTO `inferences` (
+                    unique_id, image_name, vin_no, quantity, exclusion, 
+                    createdAt, updatedAt, report_id, is_non_confirmity, s3_obj_url
+                ) VALUES (%s, %s, %s, %s, %s, NOW(), NOW(), %s, %s, %s);
+                """, 
+                (
+                    row['UNIQUE_ID'], row['IMG_NAME'], row['VIN_NO'], 
+                    row['QUANTITY'], row['EXCLUSION'], report_id, 
+                    0, s3_obj_url
+                )
+            )
+        conn.commit()
 
 def get_latest_unique_id():
     with conn.cursor() as cursor:
@@ -71,29 +99,28 @@ def delete_report(report_id):
         cursor.execute(f"DELETE FROM `reports` WHERE id = {report_id};")
         conn.commit()
 
-def create_report(name, images):
+def create_report(report_name):
     """Creates a new report and saves uploaded images."""
     # Sanitize report name for directory usage
-    safe_name = "".join([c if c.isalnum() or c in (' ', '-', '_') else '_' for c in name]).strip().replace(' ', '_')
+    # safe_name = "".join([c if c.isalnum() or c in (' ', '-', '_') else '_' for c in name]).strip().replace(' ', '_')
     
-    # Create directory
-    base_dir = "uploaded_reports"
-    report_dir = os.path.join(base_dir, safe_name)
+    # # Create directory
+    # base_dir = "uploaded_reports"
+    # report_dir = os.path.join(base_dir, safe_name)
     
-    try:
-        os.makedirs(report_dir, exist_ok=True)
+    # try:
+    #     os.makedirs(report_dir, exist_ok=True)
         
-        saved_count = 0
-        for img_file in images:
-            file_path = os.path.join(report_dir, img_file.name)
-            with open(file_path, "wb") as f:
-                f.write(img_file.getbuffer())
-            saved_count += 1
-        with conn.cursor() as cursor:
-            cursor.execute("INSERT INTO `reports` (report_name, createdAt) VALUES(%s, %s);", (name, datetime.datetime.now().date()))
-            conn.commit()
-        st.toast(f"Report '{name}' created! Saved {saved_count} images to {report_dir}", icon="✅")
-        return True
-    except Exception as e:
-        st.error(f"Failed to save report images: {e}")
-        return False
+    #     saved_count = 0
+    #     for img_file in images:
+    #         file_path = os.path.join(report_dir, img_file.name)
+    #         with open(file_path, "wb") as f:
+    #             f.write(img_file.getbuffer())
+    #         saved_count += 1
+    with conn.cursor() as cursor:
+        cursor.execute("INSERT INTO `reports` (report_name, createdAt) VALUES(%s, %s);", (report_name, datetime.datetime.now().date()))
+        cursor.execute("SELECT id FROM `reports` ORDER BY id DESC LIMIT 1;")
+        report_id = cursor.fetchone()[0]
+        conn.commit()
+        
+        return report_id

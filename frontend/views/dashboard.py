@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.data_manager import get_reports
+from backend.utils.data_manager import get_reports
 from datetime import datetime
 
 def show():

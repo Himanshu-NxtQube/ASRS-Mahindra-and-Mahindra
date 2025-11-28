@@ -8,7 +8,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from utils.data_manager import get_latest_unique_id, insert_raw_data
+from backend.utils.data_manager import get_latest_unique_id, insert_raw_data
 
 def draw_qr_page(c, vin_no):
     """

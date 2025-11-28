@@ -1,10 +1,21 @@
 import streamlit as st
 import pandas as pd
-from utils.data_manager import get_reports, get_report_details, delete_report, create_report
+from backend.utils.data_manager import get_reports, get_report_details, delete_report, create_report
 from datetime import datetime
+import threading
+import os
+from backend.inferences import get_inferences
 
 def show():
     st.header("Reports")
+    
+    # Show toast if it exists in session state
+    if 'toast_msg' in st.session_state:
+        st.toast(st.session_state['toast_msg'], icon=st.session_state.get('toast_icon'))
+        del st.session_state['toast_msg']
+        if 'toast_icon' in st.session_state:
+            del st.session_state['toast_icon']
+
     date = st.date_input("Date", datetime.now().date())
     # Create Report Section
     if "show_create_form" not in st.session_state:
@@ -21,9 +32,31 @@ def show():
             
             if st.button("Submit Report"):
                 if new_report_name and uploaded_files:
-                    if create_report(new_report_name, uploaded_files):
-                        st.session_state.show_create_form = False
-                        st.rerun()
+                    report_id = create_report(new_report_name)
+                    
+                    st.session_state.show_create_form = False
+                    st.session_state['toast_msg'] = f"Report '{new_report_name}' created! Saved {len(uploaded_files)} images"
+                    st.session_state['toast_icon'] = "✅"
+                    safe_name = "".join([c if c.isalnum() or c in (' ', '-', '_') else '_' for c in new_report_name]).strip().replace(' ', '_')
+
+                    base_dir = "uploaded_reports"
+                    report_dir = os.path.join(base_dir, safe_name)
+    
+                    
+                    os.makedirs(report_dir, exist_ok=True)
+                
+                    saved_count = 0
+                    for img_file in uploaded_files:
+                        file_path = os.path.join(report_dir, img_file.name)
+                        with open(file_path, "wb") as f:
+                            f.write(img_file.getbuffer())
+                        saved_count += 1
+                    thread = threading.Thread(target=get_inferences, args=(report_dir, report_id))
+                    st.toast("Inferences are being generated", icon="✅")
+                    thread.start()
+                    # except Exception as e:
+                    #     st.error(f"Failed to save report images: {e}")
+                    st.rerun()
                 else:
                     st.error("Please provide a report name and upload at least one image.")
 

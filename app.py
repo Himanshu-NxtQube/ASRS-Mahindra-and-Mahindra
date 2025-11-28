@@ -1,5 +1,5 @@
 import streamlit as st
-from views import qr_generation, reports, dashboard
+from frontend.views import qr_generation, reports, dashboard
 
 def main():
     st.set_page_config(page_title="ASRS Manager", layout="wide")
