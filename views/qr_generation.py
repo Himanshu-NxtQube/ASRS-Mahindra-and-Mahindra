@@ -8,9 +8,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from utils.data_manager import get_new_unique_id
+from utils.data_manager import get_latest_unique_id, insert_raw_data
 
-def draw_qr_page(c, vin_no, date):
+def draw_qr_page(c, vin_no):
     """
     Draws a single page with QR code on the given canvas.
     """
@@ -18,7 +18,7 @@ def draw_qr_page(c, vin_no, date):
     
     # Get a new unique ID
     try:
-        unique_id = get_new_unique_id()
+        unique_id = get_latest_unique_id()
     except Exception as e:
         st.error(f"Error generating Unique ID: {e}")
         unique_id = "ERROR-UID"
@@ -59,7 +59,7 @@ def generate_pdf(vin_no, date):
     """
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
-    draw_qr_page(c, vin_no, date)
+    draw_qr_page(c, vin_no)
     c.save()
     pdf_bytes = buffer.getvalue()
     buffer.close()
@@ -73,7 +73,7 @@ def generate_bulk_pdf(vin_list, date):
     c = canvas.Canvas(buffer, pagesize=A4)
     
     for vin_no in vin_list:
-        draw_qr_page(c, vin_no, date)
+        draw_qr_page(c, vin_no)
         c.showPage()
         
     c.save()
@@ -96,7 +96,7 @@ def show():
         if st.button("Generate QR"):
             if vin_no:
                 st.success(f"Generating QR for VIN: {vin_no} on {date_input}")
-                
+                insert_raw_data(vin_no, date_input)
                 # Generate PDF
                 pdf_data = generate_pdf(vin_no, date_input)
                 

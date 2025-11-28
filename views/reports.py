@@ -1,13 +1,14 @@
 import streamlit as st
 import pandas as pd
 from utils.data_manager import get_reports, get_report_details, delete_report
+from datetime import datetime
 
 def show():
     st.header("Reports")
-
+    date = st.date_input("Date", datetime.now().date())
     if 'selected_report_id' in st.session_state and st.session_state.selected_report_id is not None:
         report_id = st.session_state.selected_report_id
-        reports = get_reports()
+        reports = get_reports(date)
         
         if reports:
             # Note: User swapped indices: 1 is Name, 2 is Date (based on list view logic below)
@@ -32,12 +33,15 @@ def show():
         
         if details_data:
             df_details = pd.DataFrame(details_data)
+            # Select 2nd, 3rd, 4th, 5th, 6th columns and rename
+            df_details = df_details.iloc[:, [1, 2, 3, 4, 5]]
+            df_details.columns = ['Unique ID', 'Image Name', 'VIN No.', 'Quantity', 'Exclusion']
             st.dataframe(df_details, use_container_width=True)
         else:
             st.info("No details available for this report.")
         
     else:
-        reports = get_reports()
+        reports = get_reports(date)
         
         if not reports:
             st.info("No reports found.")
@@ -63,7 +67,7 @@ def show():
                 st.session_state.selected_report_id = report_id
                 st.rerun()
                 
-            c2.write(report_date)
+            c2.write(report_date.strftime('%Y-%m-%d'))
             
             with c3:
                 ac1, ac2, ac3 = st.columns(3)

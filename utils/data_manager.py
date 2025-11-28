@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+import datetime
 import os
 import pymysql
 from dotenv import load_dotenv
@@ -14,14 +14,20 @@ conn = pymysql.connect(
     port=int(os.getenv("rds_port", 3306))                                # Default MySQL port
 )
 
-def get_latest_raw_data():
+def get_latest_unique_id():
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM `raw-data` ORDER BY createdAt DESC LIMIT 1;")
+        cursor.execute("SELECT * FROM `raw-data` ORDER BY id DESC LIMIT 1;")
         result = cursor.fetchone()
-        return result
+        return result[1]
 
-def get_new_unique_id():
-    _id, unique_id, vin_no, createdAt, updatedAt, isDispatched = get_latest_raw_data()
+def insert_raw_data(vin_no, date):
+    next_unique_id = get_next_unique_id()
+    with conn.cursor() as cursor:
+        cursor.execute("INSERT INTO `raw-data` (unique_id, vin_no, createdAt, updatedAt, isDispatched) VALUES(%s, %s, %s, NOW(), 0);", (next_unique_id, vin_no, date))
+        conn.commit()
+
+def get_next_unique_id():
+    unique_id = get_latest_unique_id()
 
     if int(unique_id[3:]) != 9999:
         next_unique_id = unique_id[:3] + str(int(unique_id[3:]) + 1)
@@ -33,18 +39,19 @@ def get_new_unique_id():
 
     return next_unique_id
     
-def get_reports():
-    """Simulates fetching report list from SQL."""
-    # if 'reports' not in st.session_state:
-    #     st.session_state.reports = [
-    #         {'id': 1, 'name': 'Sales Report Q1', 'date': '2025-11-27'},
-    #         {'id': 2, 'name': 'Inventory Log', 'date': '2025-11-26'},
-    #         {'id': 3, 'name': 'Employee Audit', 'date': '2025-11-25'},
-    #     ]
-    # return st.session_state.reports
-
+def get_reports(date=None):
+    """Fetches report list from SQL, optionally filtered by date."""
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM `reports`;")
+        if date:
+            if isinstance(date, datetime.date):
+                date_str = date.strftime('%Y-%m-%d')
+            elif isinstance(date, str):
+                date_str = date
+            else:
+                raise ValueError("Date must be a string or datetime.date object.")
+            cursor.execute("SELECT * FROM `reports` WHERE createdAt = %s;", (date_str,))
+        else:
+            cursor.execute("SELECT * FROM `reports`;")
         result = cursor.fetchall()
         return result
 

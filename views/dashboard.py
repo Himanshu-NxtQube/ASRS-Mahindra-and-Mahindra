@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.data_manager import get_reports
+from datetime import datetime
 
 def show():
     st.title("Dashboard")
@@ -7,7 +8,7 @@ def show():
     
     # Placeholder metrics
     m1, m2, m3 = st.columns(3)
-    m1.metric("Total Reports", len(get_reports()))
+    m1.metric("Total Reports", len(get_reports(datetime.now().date())))
     m2.metric("QRs Generated Today", "125")
     m3.metric("System Status", "Active")
     
