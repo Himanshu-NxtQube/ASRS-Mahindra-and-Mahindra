@@ -82,7 +82,7 @@ def generate_bulk_pdf(vin_list, date):
     return pdf_bytes
 
 def show():
-    st.header("QR Generation")
+    st.title("QR Generation")
     
     option = st.radio("Select Input Method:", ["Manually", "Using CSV file"])
     

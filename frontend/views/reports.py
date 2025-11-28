@@ -7,7 +7,7 @@ import os
 from backend.inferences import get_inferences
 
 def show():
-    st.header("Reports")
+    st.title("Reports")
     
     # Show toast if it exists in session state
     if 'toast_msg' in st.session_state:
