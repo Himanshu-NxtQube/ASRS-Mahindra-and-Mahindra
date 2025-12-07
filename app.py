@@ -2,6 +2,7 @@ import streamlit as st
 from frontend.views import qr_generation, reports, dashboard, visualization
 
 def main():
+    st.title("NxtQube - ASRS Management System")
     st.set_page_config(page_title="ASRS Manager", layout="wide")
     
     st.sidebar.image("frontend/logos/Mahindra_Rise_vector_logo.webp", use_container_width=True)

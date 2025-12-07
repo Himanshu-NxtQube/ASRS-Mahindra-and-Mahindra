@@ -2,13 +2,10 @@
 __pycache__
 *.pdf
 venv/
-<<<<<<< HEAD
 *.json
 *.jpeg
 *.jpg
 *.png
-=======
-*.JPG
+models/
 uploaded_reports/
 credentials/
->>>>>>> 4537bb8 (feat: Add Google OCR, S3 operations, and database management utilities, and refactor frontend views into a dedicated directory.)

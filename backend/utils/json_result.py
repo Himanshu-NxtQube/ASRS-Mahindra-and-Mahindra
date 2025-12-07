@@ -28,5 +28,8 @@ def build_result(image_name, records):
             tmp['VIN_NO'] = record[2]
 
         final_output.append(tmp)
+    
+    if not final_output:
+        final_output.append(output_template)
 
     return final_output

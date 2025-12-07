@@ -73,6 +73,8 @@ def generate_bulk_pdf(vin_list, date):
     c = canvas.Canvas(buffer, pagesize=A4)
     
     for vin_no in vin_list:
+
+        insert_raw_data(vin_no, date)
         draw_qr_page(c, vin_no)
         c.showPage()
         
