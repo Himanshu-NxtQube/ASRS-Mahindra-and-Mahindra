@@ -9,3 +9,4 @@ venv/
 models/
 uploaded_reports/
 credentials/
+predictions/

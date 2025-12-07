@@ -29,7 +29,7 @@ def draw_qr_page(c, vin_no):
     c.rect(margin, margin, page_width - 2 * margin, page_height - 2 * margin)
 
     # ---- VIN NO (top text) ----
-    vin_font_size = 80
+    vin_font_size = 30
     c.setFont("Helvetica-Bold", vin_font_size)
     
     text_width = stringWidth(str(vin_no), "Helvetica-Bold", vin_font_size)

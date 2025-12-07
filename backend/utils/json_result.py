@@ -1,6 +1,6 @@
 import json
 
-def build_result(image_name, records):
+def build_result(image_name, records, detection):
     final_output = []
 
     output_template = {
@@ -11,7 +11,9 @@ def build_result(image_name, records):
         'EXCLUSION':             None
     }
 
-    if not records:
+    if not detection:
+        output_template['EXCLUSION'] = "Empty Skid"
+    elif detection and not records:
         output_template['EXCLUSION'] = "Sticker not found"
     elif len(records) > 1:
         output_template['EXCLUSION'] = "Multiple stickers detected"
