@@ -3,9 +3,6 @@ __pycache__
 *.pdf
 venv/
 *.json
-*.jpeg
-*.jpg
-*.png
 models/
 uploaded_reports/
 credentials/

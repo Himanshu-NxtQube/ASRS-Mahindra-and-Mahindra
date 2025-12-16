@@ -8,20 +8,13 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase.pdfmetrics import stringWidth
-from backend.utils.data_manager import get_latest_unique_id, insert_raw_data
+from backend.utils.data_manager import insert_raw_data
 
-def draw_qr_page(c, vin_no):
+def draw_qr_page(c, vin_no, unique_id):
     """
     Draws a single page with QR code on the given canvas.
     """
     page_width, page_height = A4
-    
-    # Get a new unique ID
-    try:
-        unique_id = get_latest_unique_id()
-    except Exception as e:
-        st.error(f"Error generating Unique ID: {e}")
-        unique_id = "ERROR-UID"
 
     # ---- BORDER ----
     margin = 7 * mm
@@ -29,7 +22,7 @@ def draw_qr_page(c, vin_no):
     c.rect(margin, margin, page_width - 2 * margin, page_height - 2 * margin)
 
     # ---- VIN NO (top text) ----
-    vin_font_size = 30
+    vin_font_size = 40
     c.setFont("Helvetica-Bold", vin_font_size)
     
     text_width = stringWidth(str(vin_no), "Helvetica-Bold", vin_font_size)
@@ -53,13 +46,21 @@ def draw_qr_page(c, vin_no):
 
     c.drawString((page_width - uid_text_width) / 2, margin + 20 * mm, unique_id)
 
-def generate_pdf(vin_no, date):
+def generate_pdf(vin_no, unique_id):
     """
-    Generates a single-page PDF with QR code and returns the bytes.
+    Generates a two-page PDF with QR code and returns the bytes.
     """
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
-    draw_qr_page(c, vin_no)
+    
+    # First Copy
+    draw_qr_page(c, vin_no, unique_id)
+    c.showPage()
+    
+    # Second Copy
+    draw_qr_page(c, vin_no, unique_id)
+    c.showPage()
+    
     c.save()
     pdf_bytes = buffer.getvalue()
     buffer.close()
@@ -74,8 +75,14 @@ def generate_bulk_pdf(vin_list, date):
     
     for vin_no in vin_list:
 
-        insert_raw_data(vin_no, date)
-        draw_qr_page(c, vin_no)
+        unique_id = insert_raw_data(vin_no, date)
+        
+        # First Copy
+        draw_qr_page(c, vin_no, unique_id)
+        c.showPage()
+        
+        # Second Copy
+        draw_qr_page(c, vin_no, unique_id)
         c.showPage()
         
     c.save()
@@ -98,9 +105,9 @@ def show():
         if st.button("Generate QR"):
             if vin_no:
                 st.success(f"Generating QR for VIN: {vin_no} on {date_input}")
-                insert_raw_data(vin_no, date_input)
+                unique_id = insert_raw_data(vin_no, date_input)
                 # Generate PDF
-                pdf_data = generate_pdf(vin_no, date_input)
+                pdf_data = generate_pdf(vin_no, unique_id)
                 
                 # Show Download Button
                 st.download_button(

@@ -90,7 +90,7 @@ def show():
             df_details = pd.DataFrame(details_data)
             # Select 2nd, 3rd, 4th, 5th, 6th columns and rename
             df_details = df_details.iloc[:, [1, 2, 3, 4, 5]]
-            df_details.columns = ['Unique ID', 'Image Name', 'VIN No.', 'Quantity', 'Exclusion']
+            df_details.columns = ['Unique ID', 'Image Name', 'VIN No.', 'Quantity', 'Remarks']
             st.dataframe(df_details, use_container_width=True)
         else:
             st.info("No details available for this report.")

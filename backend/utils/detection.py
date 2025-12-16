@@ -3,8 +3,6 @@ from ultralytics import YOLO
 CONF_THERSHOLD = 0.5
 AREA_THERSHOLD = 5,000,000
 def detect_vehicle(image_path, records):
-    if records:
-        return True
     model = YOLO('esrsyolo11.pt')
     preds = model.predict(image_path)[0]
 

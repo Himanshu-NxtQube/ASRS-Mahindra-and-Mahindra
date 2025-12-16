@@ -53,6 +53,7 @@ def insert_raw_data(vin_no, date):
     with conn.cursor() as cursor:
         cursor.execute("INSERT INTO `raw-data` (unique_id, vin_no, createdAt, updatedAt, isDispatched) VALUES(%s, %s, %s, NOW(), 0);", (next_unique_id, vin_no, date))
         conn.commit()
+    return next_unique_id
 
 def get_next_unique_id():
     unique_id = get_latest_unique_id()
