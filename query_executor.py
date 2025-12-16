@@ -1,4 +1,5 @@
 import os
+import bcrypt
 import pymysql
 from dotenv import load_dotenv
 load_dotenv()
@@ -67,7 +68,7 @@ with conn.cursor() as cursor:
     # cursor.execute("INSERT INTO `inferences` (unique_id, image_name, vin_no, quantity, exclusion, createdAt, updatedAt, report_id, is_non_confirmity) VALUES ('@AA1123', 'DJI_0005.JPG', 'HY322NHD', 1, '', NOW(), NOW(), 3, 0);")
     # cursor.execute("INSERT INTO `inferences` (unique_id, image_name, vin_no, quantity, exclusion, createdAt, updatedAt, report_id, is_non_confirmity) VALUES ('@AA1124', 'DJI_0006.JPG', 'HY322NHD', 1, '', NOW(), NOW(), 3, 0);")
     # cursor.execute("insert into `raw-data` (unique_id, vin_no, createdAt, updatedAt, isDispatched) values('@AA3315', 'VIN_0456', NOW(), NOW(), 0);")
-    cursor.execute("show tables;")
+    cursor.execute("describe users;")
     conn.commit()
     res = cursor.fetchall()
     print(len(res), "rows found in result")

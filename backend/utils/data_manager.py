@@ -16,6 +16,14 @@ conn = pymysql.connect(
     port=int(os.getenv("rds_port", 3306))                                # Default MySQL port
 )
 
+def get_user_by_email(email):
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT id, password FROM users WHERE email = %s;", (email,))
+        result = cursor.fetchone()
+    if result:
+        return {"id": result[0], "password": result[1]}
+    return None
+
 def get_record(unique_id):
     with conn.cursor() as cursor:
         cursor.execute("SELECT * FROM `raw-data` WHERE unique_id = %s;", (unique_id,))

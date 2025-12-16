@@ -1,5 +1,5 @@
 import streamlit as st
-from frontend.views import qr_generation, reports, dashboard, visualization
+from frontend.views import qr_generation, reports, dashboard, visualization, login
 
 def main():
     st.title("NxtQube - ASRS Drone Inventory Verification System")
@@ -8,6 +8,14 @@ def main():
     
     st.sidebar.image("frontend/logos/mahindra-auto-logo-png_seeklogo-613492.webp", use_container_width=True)
     st.sidebar.title("Navigation")
+
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+
+    if not st.session_state.logged_in:
+        login.show()
+        return
+
     if "current_view" not in st.session_state:
         st.session_state.current_view = "QR Generation"
 
