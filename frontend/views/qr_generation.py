@@ -105,7 +105,7 @@ def show():
         if st.button("Generate QR"):
             if vin_no:
                 st.success(f"Generating QR for VIN: {vin_no} on {date_input}")
-                unique_id = insert_raw_data(vin_no, date_input)
+                unique_id = insert_raw_data(vin_no, date_input, int(st.session_state.user_id))
                 # Generate PDF
                 pdf_data = generate_pdf(vin_no, unique_id)
                 

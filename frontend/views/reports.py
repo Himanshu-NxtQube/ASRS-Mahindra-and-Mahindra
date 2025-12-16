@@ -32,7 +32,7 @@ def show():
             
             if st.button("Submit Report"):
                 if new_report_name and uploaded_files:
-                    report_id = create_report(new_report_name)
+                    report_id = create_report(new_report_name, int(st.session_state.user_id))
                     
                     st.session_state.show_create_form = False
                     st.session_state['toast_msg'] = f"Report '{new_report_name}' created! Saved {len(uploaded_files)} images"
@@ -51,7 +51,7 @@ def show():
                         with open(file_path, "wb") as f:
                             f.write(img_file.getbuffer())
                         saved_count += 1
-                    thread = threading.Thread(target=get_inferences, args=(report_dir, report_id))
+                    thread = threading.Thread(target=get_inferences, args=(report_dir, report_id, int(st.session_state.user_id)))
                     st.toast("Inferences are being generated", icon="✅")
                     thread.start()
                     # except Exception as e:
@@ -63,7 +63,7 @@ def show():
     
     if 'selected_report_id' in st.session_state and st.session_state.selected_report_id is not None:
         report_id = st.session_state.selected_report_id
-        reports = get_reports(date)
+        reports = get_reports(date, int(st.session_state.user_id))
         
         if reports:
             # Note: User swapped indices: 1 is Name, 2 is Date (based on list view logic below)
@@ -84,7 +84,7 @@ def show():
         with col_title:
             st.subheader(f"Details: {report_name}")
             
-        details_data = get_report_details(report_id)
+        details_data = get_report_details(report_id, int(st.session_state.user_id))
         
         if details_data:
             df_details = pd.DataFrame(details_data)
@@ -96,7 +96,7 @@ def show():
             st.info("No details available for this report.")
         
     else:
-        reports = get_reports(date)
+        reports = get_reports(date, int(st.session_state.user_id))
         
         if not reports:
             st.info("No reports found.")
@@ -142,3 +142,4 @@ def show():
                         delete_report(report_id)
                         st.rerun()
             st.divider()
+ 

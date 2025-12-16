@@ -24,47 +24,49 @@ def get_user_by_email(email):
         return {"id": result[0], "password": result[1]}
     return None
 
-def get_record(unique_id):
+def get_record(unique_id, user_id):
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM `raw-data` WHERE unique_id = %s;", (unique_id,))
+        cursor.execute("SELECT * FROM `raw-data` WHERE unique_id = %s and user_id = %s;", (unique_id, user_id))
         result = cursor.fetchone()
     if result:
         return result
     return (None, unique_id, None, None, None, None)
 
-def upload_result(result, report_id, s3_obj_url):
+def upload_result(result, report_id, s3_obj_url, user_id):
     with conn.cursor() as cursor:
         for row in result:
             cursor.execute(
                 """
                 INSERT INTO `inferences` (
                     unique_id, image_name, vin_no, quantity, exclusion, 
-                    createdAt, updatedAt, report_id, is_non_confirmity, s3_obj_url
-                ) VALUES (%s, %s, %s, %s, %s, NOW(), NOW(), %s, %s, %s);
+                    createdAt, updatedAt, report_id, is_non_confirmity, s3_obj_url, user_id
+                ) VALUES (%s, %s, %s, %s, %s, NOW(), NOW(), %s, %s, %s, %s);
                 """, 
                 (
                     row['UNIQUE_ID'], row['IMG_NAME'], row['VIN_NO'], 
                     row['QUANTITY'], row['EXCLUSION'], report_id, 
-                    0, s3_obj_url
+                    0, s3_obj_url, user_id
                 )
             )
         conn.commit()
 
-def get_latest_unique_id():
+def get_latest_unique_id(user_id):
     with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM `raw-data` ORDER BY id DESC LIMIT 1;")
+        cursor.execute("SELECT unique_id FROM `raw-data` WHERE user_id = %s ORDER BY id DESC LIMIT 1;", (user_id,))
         result = cursor.fetchone()
-        return result[1]
+        return result[0] if result else None
 
-def insert_raw_data(vin_no, date):
-    next_unique_id = get_next_unique_id()
+def insert_raw_data(vin_no, date, user_id):
+    next_unique_id = get_next_unique_id(user_id)
     with conn.cursor() as cursor:
-        cursor.execute("INSERT INTO `raw-data` (unique_id, vin_no, createdAt, updatedAt, isDispatched) VALUES(%s, %s, %s, NOW(), 0);", (next_unique_id, vin_no, date))
+        cursor.execute("INSERT INTO `raw-data` (unique_id, vin_no, createdAt, updatedAt, isDispatched, user_id) VALUES(%s, %s, %s, NOW(), 0, %s);", (next_unique_id, vin_no, date, user_id))
         conn.commit()
     return next_unique_id
 
-def get_next_unique_id():
-    unique_id = get_latest_unique_id()
+def get_next_unique_id(user_id):
+    unique_id = get_latest_unique_id(user_id)
+    if not unique_id:
+        return "@AA1111"
 
     if int(unique_id[3:]) != 9999:
         next_unique_id = unique_id[:3] + str(int(unique_id[3:]) + 1)
@@ -76,7 +78,7 @@ def get_next_unique_id():
 
     return next_unique_id
     
-def get_reports(date=None):
+def get_reports(date=None, user_id=None):
     """Fetches report list from SQL, optionally filtered by date."""
     with conn.cursor() as cursor:
         if date:
@@ -86,29 +88,29 @@ def get_reports(date=None):
                 date_str = date
             else:
                 raise ValueError("Date must be a string or datetime.date object.")
-            cursor.execute("SELECT * FROM `reports` WHERE createdAt = %s;", (date_str,))
+            cursor.execute("SELECT * FROM `reports` WHERE createdAt = %s and user_id = %s;", (date_str, user_id))
         else:
-            cursor.execute("SELECT * FROM `reports`;")
+            cursor.execute("SELECT * FROM `reports` where user_id = %s;", (user_id,))
         result = cursor.fetchall()
         return result
 
-def get_report_details(report_id):
+def get_report_details(report_id, user_id):
     """Simulates fetching detailed rows for a specific report from SQL."""
     # Just generating some dummy data based on ID
     with conn.cursor() as cursor:
-        cursor.execute(f"SELECT * FROM `inferences` where report_id = {report_id};")
+        cursor.execute(f"SELECT * FROM `inferences` where report_id = {report_id} and user_id = {user_id};")
         result = cursor.fetchall()
         return result
 
 
-def delete_report(report_id):
+def delete_report(report_id, user_id):
     """Simulates deleting a report."""
     with conn.cursor() as cursor:
-        cursor.execute(f"DELETE FROM `inferences` WHERE report_id = {report_id};")  
-        cursor.execute(f"DELETE FROM `reports` WHERE id = {report_id};")
+        cursor.execute(f"DELETE FROM `inferences` WHERE report_id = {report_id} and user_id = {user_id};")  
+        cursor.execute(f"DELETE FROM `reports` WHERE id = {report_id} and user_id = {user_id};")
         conn.commit()
 
-def create_report(report_name):
+def create_report(report_name, user_id):
     """Creates a new report and saves uploaded images."""
     # Sanitize report name for directory usage
     # safe_name = "".join([c if c.isalnum() or c in (' ', '-', '_') else '_' for c in name]).strip().replace(' ', '_')
@@ -127,8 +129,8 @@ def create_report(report_name):
     #             f.write(img_file.getbuffer())
     #         saved_count += 1
     with conn.cursor() as cursor:
-        cursor.execute("INSERT INTO `reports` (report_name, createdAt) VALUES(%s, %s);", (report_name, datetime.datetime.now().date()))
-        cursor.execute("SELECT id FROM `reports` ORDER BY id DESC LIMIT 1;")
+        cursor.execute("INSERT INTO `reports` (report_name, createdAt, user_id) VALUES(%s, %s, %s);", (report_name, datetime.datetime.now().date(), user_id))
+        cursor.execute("SELECT id FROM `reports` where user_id = %s ORDER BY id DESC LIMIT 1;", (user_id))
         report_id = cursor.fetchone()[0]
         conn.commit()
         

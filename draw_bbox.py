@@ -208,10 +208,10 @@ if __name__ == "__main__":
     save_output_path = "predictions"
     os.makedirs(save_output_path, exist_ok=True)
     # model_path = "./models/new_blue_orange_bar.pt"
-    model_path = "./models/esrsyolo11.pt"
+    model_path = "./models/yolo11n.pt"
     model = YOLO(model_path)
-    image_dir = "uploaded_reports/poc1/"
-    test_images = ['DJI_0739_MP4-0018.jpg']
+    image_dir = "uploaded_reports/test_report1/"
+    test_images = ['DJI_0749.JPG']
     for image in os.listdir(image_dir):
         if image in test_images:
             image_path = os.path.join(image_dir, image)
